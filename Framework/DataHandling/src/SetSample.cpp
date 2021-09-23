@@ -496,6 +496,9 @@ void SetSample::exec() {
   using API::ExperimentInfo_sptr;
   using Kernel::PropertyManager_sptr;
 
+  PropertyManager_sptr geom = getProperty(PropertyNames::GEOMETRY);
+  float height = geom->getProperty("Height");
+
   Workspace_sptr workspace = getProperty(PropertyNames::INPUT_WORKSPACE);
   PropertyManager_sptr environArgs = getProperty(PropertyNames::ENVIRONMENT);
   PropertyManager_sptr geometryArgs = getProperty(PropertyNames::GEOMETRY);
