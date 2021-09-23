@@ -644,7 +644,7 @@ void TimeSeriesProperty<TYPE>::splitByTimeVector(const std::vector<DateAndTime> 
  * @param max :: max value
  * @param TimeTolerance :: offset added to times in seconds (default: 0)
  * @param centre :: Whether the log value time is considered centred or at the
- *beginning (the default).
+ *beginning (the default).  For log value is recorded upon change, this shall be false.
  */
 template <typename TYPE>
 void TimeSeriesProperty<TYPE>::makeFilterByValue(std::vector<SplittingInterval> &split, double min, double max,
@@ -708,6 +708,10 @@ void TimeSeriesProperty<TYPE>::makeFilterByValue(std::vector<SplittingInterval> 
         // Otherwise, use the first 'bad' time.
         stop = centre ? lastTime + tol : t;
         split.emplace_back(start, stop, 0);
+
+        // Debug output
+        std::cout << start.totalNanoseconds() << "    " << stop.totalNanoseconds() << "\n";
+
         // Reset the number of good ones, for next time
         numgood = 0;
       }
@@ -720,6 +724,8 @@ void TimeSeriesProperty<TYPE>::makeFilterByValue(std::vector<SplittingInterval> 
     // found
     stop = t + tol;
     split.emplace_back(start, stop, 0);
+    // Debug output
+    std::cout << "Last  " << start.totalNanoseconds() << "    " << stop.totalNanoseconds() << "\n";
   }
 }
 
@@ -771,6 +777,11 @@ void TimeSeriesProperty<TYPE>::expandFilterToRange(std::vector<SplittingInterval
   if ((val >= min) && (val <= max)) {
     TimeSplitterType extraFilter;
     extraFilter.emplace_back(range.begin(), firstTime(), 0);
+
+    // Debug output
+    std::cout << "Expand before 1st value: " << range.begin().totalNanoseconds() << "    "
+              << firstTime().totalNanoseconds() << "\n";
+
     // Include everything from the start of the run to the first time measured
     // (which may be a null time interval; this'll be ignored)
     split = split | extraFilter;
@@ -781,6 +792,11 @@ void TimeSeriesProperty<TYPE>::expandFilterToRange(std::vector<SplittingInterval
   if ((val >= min) && (val <= max)) {
     TimeSplitterType extraFilter;
     extraFilter.emplace_back(lastTime(), range.end(), 0);
+
+    // Debug output
+    std::cout << "Expand after last value: " << lastTime().totalNanoseconds() << "    "
+              << range.end().totalNanoseconds() << "\n";
+
     // Include everything from the start of the run to the first time measured
     // (which may be a null time interval; this'll be ignored)
     split = split | extraFilter;
