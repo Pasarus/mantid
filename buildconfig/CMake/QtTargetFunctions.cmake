@@ -41,7 +41,6 @@ function (mtd_add_qt_executable)
   # Create targets
   foreach(_ver ${_qt_vers})
     if (_ver EQUAL 5 AND (ENABLE_WORKBENCH OR BUILD_MANTIDQT))
-      mtd_add_qt_target (EXECUTABLE QT_VERSION ${_ver} ${ARGN})
     endif ()
   endforeach()
 endfunction()
