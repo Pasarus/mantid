@@ -8,7 +8,10 @@
 #include "MantidAPI/Axis.h"
 #include "MantidAPI/Run.h"
 #include "MantidAPI/WorkspaceGroup.h"
+#include "MantidKernel/ConfigService.h"
 #include "MantidKernel/DateAndTimeHelpers.h"
+#include "MantidKernel/FacilityInfo.h"
+#include "MantidKernel/InstrumentInfo.h"
 #include "MantidKernel/Logger.h"
 #include "MantidKernel/MultiThreaded.h"
 #include "MantidKernel/TimeSeriesProperty.h"
@@ -34,6 +37,9 @@ GNU_DIAG_ON("conversion")
 #include <tbb/parallel_sort.h>
 
 using namespace Mantid::Types;
+using Mantid::Kernel::ConfigService;
+
+// Counters
 size_t totalNumEventsSinceStart = 0;
 size_t totalNumEventsBeforeLastTimeout = 0;
 double totalPopulateWorkspaceDuration = 0;
@@ -404,7 +410,7 @@ void KafkaEventStreamDecoder::eventDataFromMessage(const std::string &buffer, si
 
     std::transform(detData.begin(), detData.end(), tofData.begin(), std::back_inserter(m_receivedEventBuffer),
                    [&](uint64_t detId, uint64_t tof) -> BufferedEvent {
-                     const auto workspaceIndex = m_specToIdx[detId + m_specToIdxOffset];
+                     const auto workspaceIndex = m_detIdToWkspIdx(detId);
                      return {workspaceIndex, tof, pulseIndex};
                    });
   }
@@ -547,6 +553,7 @@ void KafkaEventStreamDecoder::initLocalCaches(const RunStartStruct &runStartData
     eventBuffer->rebuildSpectraMapping(true, 0);
     eventBuffer->getAxis(0)->unit() = Kernel::UnitFactory::Instance().create("TOF");
     eventBuffer->setYUnit("Counts");
+
   } else {
     // Create buffer
     eventBuffer = createBufferWorkspace<DataObjects::EventWorkspace>(
@@ -554,9 +561,24 @@ void KafkaEventStreamDecoder::initLocalCaches(const RunStartStruct &runStartData
         runStartData.detectorIDs.data(), static_cast<uint32_t>(runStartData.detectorIDs.size()));
   }
 
+  // Set mapping function
+  if (ConfigService::Instance().getInstrument(instName).facility().name() == "ISIS" ||
+      runStartData.detSpecMapSpecified) {
+    auto detIdToIdx = eventBuffer->getDetectorIDToWorkspaceIndexMap();
+    m_detIdToWkspIdx = [detIdToIdx = std::move(detIdToIdx)](uint64_t detId) {
+      return detIdToIdx.at(static_cast<detid_t>(detId));
+    };
+  } else {
+    detid_t idToIdxOffset(0);
+    auto detIdToIdx = eventBuffer->getDetectorIDToWorkspaceIndexVector(idToIdxOffset);
+    m_detIdToWkspIdx = [detIdToIdx = std::move(detIdToIdx), idToIdxOffset](uint64_t detId) {
+      return detIdToIdx[detId + idToIdxOffset];
+    };
+  }
+
   // Load the instrument if possible but continue if we can't
   if (!loadInstrument<DataObjects::EventWorkspace>(instName, eventBuffer, jsonGeometry))
-    g_log.warning("Instrument could not be loaded.Continuing without instrument");
+    g_log.warning("Instrument could not be loaded. Continuing without instrument");
 
   auto &mutableRun = eventBuffer->mutableRun();
   // Run start. Cache locally for computing frame times
@@ -569,9 +591,6 @@ void KafkaEventStreamDecoder::initLocalCaches(const RunStartStruct &runStartData
   mutableRun.addProperty(RUN_NUMBER_PROPERTY, runStartData.runId);
   // Create the proton charge property
   mutableRun.addProperty(new Kernel::TimeSeriesProperty<double>(PROTON_CHARGE_PROPERTY));
-
-  // Cache spec->index mapping. We assume it is the same across all periods
-  m_specToIdx = eventBuffer->getSpectrumToWorkspaceIndexVector(m_specToIdxOffset);
 
   // Buffers for each period
   size_t nperiods = runStartData.nPeriods;
