@@ -41,6 +41,7 @@ Bugfixes
 - Fixed an issue to plot negative values with logarithm scaling in slice view.
 - Workbench will no longer hang if an algorithm was running when workbench was closed.
 - Stopped workbench from ignoring GUIs that want to cancel closing
+- Fixed a memory leak when closing the instrument viewer window.
 
 
 :ref:`Release 6.3.0 <v6.3.0>`
