@@ -60,7 +60,32 @@ def _focus_one_ws(input_workspace, run_number, instrument, perform_vanadium_norm
 
     # Correct for absorption / multiple scattering if required
     if absorb:
-        input_workspace = instrument._apply_absorb_corrections(run_details=run_details, ws_to_correct=input_workspace)
+        # input_workspace = instrument._apply_absorb_corrections(run_details=run_details, ws_to_correct=input_workspace)
+
+        corrections = mantid.PaalmanPingsMonteCarloAbsorption(
+            InputWorkspace=input_workspace,
+            Shape='Cylinder',
+            BeamHeight=2.0,
+            BeamWidth=2.0,
+            Height=2.0,
+            SampleWidth=2.0,
+            SampleThickness=0.1,
+            SampleChemicalFormula='H2-O',
+            SampleDensity=1.0,
+            ContainerFrontThickness=0.02,
+            ContainerBackThickness=0.02,
+            ContainerChemicalFormula='V',
+            ContainerDensity=6.0,
+            CorrectionsWorkspace='corrections'
+        )
+        # ass_ws = corrections[0]
+        # assc_ws = corrections[1]
+        # acsc_ws = corrections[2]
+        # acc_ws = corrections[3]
+
+        input_workspace = mantid.ApplyPaalmanPingsCorrection(SampleWorkspace=input_workspace,  # ass_ws ??
+                                                             CorrectionsWorkspace=corrections,
+                                                             CanWorkspace=can_ws) # Where from?
     else:
         # Set sample material if specified by the user
         if sample_details is not None:
