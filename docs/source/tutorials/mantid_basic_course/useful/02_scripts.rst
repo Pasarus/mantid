@@ -6,7 +6,7 @@ Working with Python
 
 This is a quick summary of how to use python scripts in Workbench. To learn more about this, see the further tutorials on the `home page <https://www.mantidproject.org/Main_Page>`_. Even if you are a novice at Python, it is useful to know how to run a script as you can produce one within Mantid: from the "Generate a script" button on a plot toolbar, or from project recovery when you reopen Mantid after a crash.
 
-Within the Mantid you can make use of the script window or IPython prompt to manipulate data and build plots exactly to your specifications in ways that you would not
+Within Mantid you can make use of the script window or IPython prompt to manipulate data and build plots exactly to your specifications in ways that you would not
 be able to with the interface alone.
 
 .. figure:: /images/Workbench_script_new.png
