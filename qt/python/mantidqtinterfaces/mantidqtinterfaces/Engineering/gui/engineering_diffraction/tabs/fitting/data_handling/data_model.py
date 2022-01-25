@@ -520,8 +520,10 @@ class FittingDataModel(object):
             bg_line = next((line for line in axes[0].get_lines() if line not in axes[0].get_tracked_artists()), None)
             bgsub_line = next((line for line in axes[1].get_tracked_artists()), None)
             if data_line and bg_line and bgsub_line:
-                bg_line.set_ydata(data_line.get_ydata() - bgsub_line.get_ydata())
-                event.canvas.draw_idle()
+                new_bg_data = data_line.get_ydata() - bgsub_line.get_ydata()
+                if not all(new_bg_data == bg_line.get_ydata()):
+                    bg_line.set_ydata(new_bg_data)
+                    event.canvas.draw_idle()
             else:
                 # would like to close the figure at this point but this interferes with the mantid ADS observers when
                 # any of the tracked workspaces are deleted and causes mantid to hard crash - so just print warning
