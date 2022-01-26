@@ -13,8 +13,8 @@ jobs:
         with:
           script: |
             await github.rest.actions.createWorkflowDispatch({
-              'mantidproject',
-              'conda-recipes',
-              'update_version.yml',
-              'main'
+              owner: 'mantidproject',
+              repo: 'conda-recipes',
+              workflow_id: 'update_version.yml',
+              ref: 'main',
             });
