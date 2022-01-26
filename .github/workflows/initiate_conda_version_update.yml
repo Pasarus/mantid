@@ -16,5 +16,5 @@ jobs:
               'mantidproject',
               'conda-recipes',
               'update_version.yml',
-              'main',
+              'main'
             });
