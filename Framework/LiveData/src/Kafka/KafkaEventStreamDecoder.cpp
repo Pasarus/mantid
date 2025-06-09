@@ -273,7 +273,7 @@ void KafkaEventStreamDecoder::captureImplExcept() {
     if (buffer.empty()) {
       start = std::chrono::system_clock::now();
       globstart = std::chrono::system_clock::now();
-      g_log.notice() << "Waiting to start..." << std::endl;
+      g_log.error() << "No events found..." << std::endl;
       m_cbIterationEnd();
       continue;
     }
@@ -311,6 +311,7 @@ void KafkaEventStreamDecoder::captureImplExcept() {
     // Check if we have an event message
     // Most will be event messages so we check for this type first
     if (flatbuffers::BufferHasIdentifier(reinterpret_cast<const uint8_t *>(buffer.c_str()), EVENT_MESSAGE_ID.c_str())) {
+      g_log.notice() << "Event message found: ";
       uint64_t currentPulseTime(-1);
       eventDataFromMessage(buffer, nEvents, currentPulseTime);
 
@@ -370,7 +371,7 @@ void KafkaEventStreamDecoder::eventDataFromMessage(const std::string &buffer, si
                                                    uint64_t &pulseTimeRet) {
   /* Parse message */
   const auto eventMsg = GetEventMessage(reinterpret_cast<const uint8_t *>(buffer.c_str()));
-
+  g_log.notice() << eventMsg << std::endl;
   /* Parse pulse time */
   pulseTimeRet = static_cast<uint64_t>(eventMsg->pulse_time());
   const DateAndTime pulseTime(pulseTimeRet);
